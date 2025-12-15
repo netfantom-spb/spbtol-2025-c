@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <math.h>
 
-int main() {
+int main()
+{
     FILE *file = fopen("data.txt", "r");
-    if (!file) {
+    if (!file)
+    {
         printf("Ошибка открытия файла\n");
         return 1;
     }
@@ -14,24 +16,27 @@ int main() {
     int count = 0;
 
     // Чтение чисел в массив
-    while (fscanf(file, "%lf", &values[count]) == 1 && count < 1000) {
+    while (fscanf(file, "%lf", &values[count]) == 1 && count < 1000)
+    {
         sum += values[count];
         count++;
     }
 
     fclose(file);
 
-    if (count == 0) {
+    if (count == 0)
+    {
         printf("Файл пуст\n");
         return 1;
     }
 
     // Вычисление среднего
     double mean = sum / count;
-    
+
     // Вычисление суммы квадратов отклонений от среднего
     double sum_squared_diff = 0;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         double diff = values[i] - mean;
         sum_squared_diff += diff * diff;
     }
