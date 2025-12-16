@@ -15,10 +15,13 @@
 #define HEIGHT 20
 #define MAX_SNAKE_LENGTH 100
 
-// Настройка задержек в миллисекундах
-#define BASIC_DELAY 200 // Начальная задержка при горизонтальном движении
-#define HORIZONAL_DELAY_KOEF 1.65 // Множитель задержки для вертикального движения
-#define DELAY_LENGHT_KOEF 0.5
+// Параметры задержки и скорости
+#define BASIC_DELAY 200          // Базовая задержка в миллисекундах
+#define HORIZONTAL_DELAY_KOEF 1.0  // Коэффициент для горизонтального движения
+#define VERTICAL_DELAY_KOEF 1.65   // Коэффициент для вертикального движения
+#define DELAY_LENGTH_KOEF 0.9      // Коэффициент уменьшения задержки при удвоении длины
+#define LENGTH_CHECKPOINT 3        // Начальная длина для отслеживания удвоений
+#define MIN_DELAY 50              // Минимальная задержка (чтобы игра не стала слишком быстрой)
 
 // Структура для координат
 typedef struct {
@@ -106,6 +109,45 @@ void init_game() {
     game_over = 0;
 }
 
+// Получить задержку в зависимости от направления и длины змейки
+int get_delay() {
+    float delay_multiplier = 1.0;
+    float base_delay;
+    
+    // Вычисляем, сколько раз длина змейки превысила начальную длину в 2 раза
+    int doubling_count = 0;
+    int checkpoint = LENGTH_CHECKPOINT;
+    
+    while (snake_length >= checkpoint * 2) {
+        doubling_count++;
+        checkpoint *= 2;
+    }
+    
+    // Применяем коэффициент уменьшения за каждое удвоение
+    for (int i = 0; i < doubling_count; i++) {
+        delay_multiplier *= DELAY_LENGTH_KOEF;
+    }
+    
+    // Базовую задержку умножаем на коэффициент направления
+    if (direction == 'w' || direction == 's') {
+        // Вертикальное движение
+        base_delay = BASIC_DELAY * VERTICAL_DELAY_KOEF;
+    } else {
+        // Горизонтальное движение
+        base_delay = BASIC_DELAY * HORIZONTAL_DELAY_KOEF;
+    }
+    
+    // Применяем коэффициент уменьшения из-за длины змейки
+    int final_delay = (int)(base_delay * delay_multiplier);
+    
+    // Минимальная задержка (чтобы игра не стала слишком быстрой)
+    if (final_delay < MIN_DELAY) {
+        final_delay = MIN_DELAY;
+    }
+    
+    return final_delay;
+}
+
 // Отрисовка игрового поля
 void draw() {
     clear_screen();
@@ -153,6 +195,7 @@ void draw() {
     
     // Вывод счета
     printf("Счет: %d\n", score);
+    printf("Длина: %d (задержка: %d мс)\n", snake_length, get_delay());
     printf("Управление: WASD - движение, Q - выход\n");
     printf("Текущее направление: %c\n", direction);
 }
@@ -217,17 +260,6 @@ void input() {
             }
         }
     #endif
-}
-
-// Получить задержку в зависимости от направления
-int get_delay() {
-    if (direction == 'w' || direction == 's') {
-        // Вертикальное движение - большая задержка
-        return BASIC_DELAY * HORIZONAL_DELAY_KOEF;
-    } else {
-        // Горизонтальное движение - меньшая задержка
-        return BASIC_DELAY;
-    }
 }
 
 // Обновление логики игры
@@ -314,6 +346,10 @@ void snake_game() {
     printf("Цель: управляйте змейкой с помощью клавиш WASD\n");
     printf("Собирайте еду (X) чтобы расти и увеличивать счет\n");
     printf("Игра заканчивается при столкновении с границей или с собой\n");
+    printf("\nОсобенности:\n");
+    printf("- Скорость адаптируется: вертикаль медленнее горизонтали\n");
+    printf("- Чем длиннее змейка, тем быстрее она двигается\n");
+    printf("- При каждом удвоении длины задержка уменьшается на 10%%\n");
     printf("\nНажмите Enter для начала...\n");
     
     char buffer[100];
@@ -380,11 +416,18 @@ int main() {
                         printf("   - Собирайте еду (X) для роста змейки\n");
                         printf("   - Каждая съеденная еда дает +10 очков\n");
                         printf("   - Избегайте столкновений с границами и собой\n");
-                        printf("\n3. Особенности:\n");
-                        printf("   - Змейка постоянно двигается\n");
-                        printf("   - Нельзя двигаться в противоположном направлении\n");
-                        printf("   - Игра заканчивается при столкновении\n");
-                        printf("   - Скорость адаптирована под вертикальное/горизонтальное движение\n");
+                        printf("\n3. Особенности скорости:\n");
+                        printf("   - Вертикальное движение медленнее (т.к. символы выше чем шире)\n");
+                        printf("   - Горизонтальная задержка: %d мс\n", (int)(BASIC_DELAY * HORIZONTAL_DELAY_KOEF));
+                        printf("   - Вертикальная задержка: %d мс\n", (int)(BASIC_DELAY * VERTICAL_DELAY_KOEF));
+                        printf("   - При удвоении длины задержка умножается на %.1f\n", DELAY_LENGTH_KOEF);
+                        printf("   - Минимальная задержка: %d мс\n", MIN_DELAY);
+                        printf("   - Начальная длина: %d\n", LENGTH_CHECKPOINT);
+                        printf("\nПример удвоений длины:\n");
+                        printf("   Длина 3-5: базовая скорость\n");
+                        printf("   Длина 6-11: скорость × %.1f\n", DELAY_LENGTH_KOEF);
+                        printf("   Длина 12-23: скорость × %.2f\n", DELAY_LENGTH_KOEF * DELAY_LENGTH_KOEF);
+                        printf("   И так далее...\n");
                         printf("\nНажмите Enter для возврата в меню...\n");
                         fgets(input_buffer, sizeof(input_buffer), stdin);
                         break;
