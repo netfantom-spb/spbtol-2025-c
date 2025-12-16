@@ -1,3 +1,3 @@
 #/bin/bash
-gcc -o snake.o snake.c -lm &&
+gcc -o snake.o snake.c &&
 ./snake.o

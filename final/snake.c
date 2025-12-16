@@ -15,6 +15,11 @@
 #define HEIGHT 20
 #define MAX_SNAKE_LENGTH 100
 
+// Настройка задержек в миллисекундах
+#define BASIC_DELAY 200 // Начальная задержка при горизонтальном движении
+#define HORIZONAL_DELAY_KOEF 1.65 // Множитель задержки для вертикального движения
+#define DELAY_LENGHT_KOEF 0.5
+
 // Структура для координат
 typedef struct {
     int x;
@@ -149,6 +154,7 @@ void draw() {
     // Вывод счета
     printf("Счет: %d\n", score);
     printf("Управление: WASD - движение, Q - выход\n");
+    printf("Текущее направление: %c\n", direction);
 }
 
 // Обработка ввода с клавиатуры
@@ -211,6 +217,17 @@ void input() {
             }
         }
     #endif
+}
+
+// Получить задержку в зависимости от направления
+int get_delay() {
+    if (direction == 'w' || direction == 's') {
+        // Вертикальное движение - большая задержка
+        return BASIC_DELAY * HORIZONAL_DELAY_KOEF;
+    } else {
+        // Горизонтальное движение - меньшая задержка
+        return BASIC_DELAY;
+    }
 }
 
 // Обновление логики игры
@@ -312,7 +329,7 @@ void snake_game() {
             // Для Linux - проверка ввода без блокировки
             input();
             update();
-            sleep_ms(200);
+            sleep_ms(get_delay());  // Используем адаптивную задержку
         #else
             // Для других систем - посимвольный ввод
             printf("Введите команду (WASD): ");
@@ -367,6 +384,7 @@ int main() {
                         printf("   - Змейка постоянно двигается\n");
                         printf("   - Нельзя двигаться в противоположном направлении\n");
                         printf("   - Игра заканчивается при столкновении\n");
+                        printf("   - Скорость адаптирована под вертикальное/горизонтальное движение\n");
                         printf("\nНажмите Enter для возврата в меню...\n");
                         fgets(input_buffer, sizeof(input_buffer), stdin);
                         break;
